@@ -5,14 +5,10 @@ import {
 	deleteTodo as deleteTodoMutation,
 } from "../../graphql/mutations";
 import { API, Storage } from "aws-amplify";
+import { Todo } from "../../API";
 
 const initialFormState = { name: "", description: "" };
-interface Todo {
-	id: string;
-	name: string;
-	description: string;
-	image: string;
-}
+
 function TodoList() {
 	const [todos, setTodos] = useState<Todo[]>([]);
 	const [formData, setFormData] = useState<Partial<Todo>>(initialFormState);
@@ -88,7 +84,7 @@ function TodoList() {
 					setFormData({ ...formData, description: e.target.value })
 				}
 				placeholder="Todo description"
-				value={formData.description}
+				value={formData.description ?? ""}
 			/>
 			<input type="file" onChange={(e) => onImageUpload(e)} />
 			<button onClick={createTodo}>Create Todo</button>

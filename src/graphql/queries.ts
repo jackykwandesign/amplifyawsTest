@@ -1,3 +1,4 @@
+/* tslint:disable */
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
@@ -7,6 +8,7 @@ export const getTodo = /* GraphQL */ `
       id
       name
       description
+      image
       createdAt
       updatedAt
     }
@@ -23,6 +25,7 @@ export const listTodos = /* GraphQL */ `
         id
         name
         description
+        image
         createdAt
         updatedAt
       }
