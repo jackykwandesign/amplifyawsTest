@@ -4,13 +4,14 @@ import {
 	createTodo as createTodoMutation,
 	deleteTodo as deleteTodoMutation,
 } from "../../graphql/mutations";
-import { API } from "aws-amplify";
+import { API, Storage } from "aws-amplify";
 
 const initialFormState = { name: "", description: "" };
 interface Todo {
 	id: string;
 	name: string;
 	description: string;
+	image: string;
 }
 function TodoList() {
 	const [todos, setTodos] = useState<Todo[]>([]);
@@ -20,19 +21,46 @@ function TodoList() {
 		fetchTodos();
 	}, []);
 
+	async function onImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+		const { files } = e.target;
+        console.log("files", files)
+		if (!files || files?.length < 1) return;
+		const file = files[0];
+		setFormData({ ...formData, image: file.name });
+		await Storage.put(file.name, file);
+        console.log("uploaded")
+		// fetchTodos();
+	}
+
 	async function fetchTodos() {
 		const apiData = await API.graphql({ query: listTodos });
-		setTodos((apiData as any).data.listTodos.items);
+		const newTodos = (apiData as any).data.listTodos.items as Todo[];
+		await Promise.all(
+			newTodos.map(async (todo) => {
+				if (todo.image) {
+					const image = await Storage.get(todo.image);
+					todo.image = image;
+				}
+				return todo;
+			})
+		);
+		setTodos(newTodos);
 	}
 
 	async function createTodo() {
+        console.log("formData", formData)
 		if (!formData.name || !formData.description) return;
 		const apiResult = await API.graphql({
 			query: createTodoMutation,
 			variables: { input: formData },
 		});
-		console.log("apiResult", apiResult);
 		const newTodo = (apiResult as any).data.createTodo as Todo;
+        console.log("apiResult", apiResult)
+		if (newTodo.image) {
+			const image = await Storage.get(newTodo.image);
+			newTodo.image = image;
+		}
+        console.log("newTodo", newTodo)
 		setTodos([...todos, newTodo]);
 		setFormData(initialFormState);
 	}
@@ -62,21 +90,31 @@ function TodoList() {
 				placeholder="Todo description"
 				value={formData.description}
 			/>
+			<input type="file" onChange={(e) => onImageUpload(e)} />
 			<button onClick={createTodo}>Create Todo</button>
 			<div style={{ marginBottom: 30 }}>
 				{todos.length === 0
 					? "No data"
-					: todos.map((todo,i) => (
-							<div style={{
-                                display:"flex",
-                                flexDirection:"row",
-                                justifyContent:"center",
-                                alignItems:"center",
-                                columnGap:"12px",
-                            }} key={todo.id}>
-                                <h2>{`${i+1}. `}</h2>
+					: todos.map((todo, i) => (
+							<div
+								style={{
+									display: "flex",
+									flexDirection: "row",
+									justifyContent: "center",
+									alignItems: "center",
+									columnGap: "12px",
+								}}
+								key={todo.id}
+							>
+								<h2>{`${i + 1}. `}</h2>
 								<h2>{todo.name}</h2>
 								<p>{todo.description}</p>
+								{todo.image && (
+									<img
+										src={todo.image}
+										style={{ width: 400 }}
+									/>
+								)}
 								<button onClick={() => deleteTodo(todo)}>
 									Delete todo
 								</button>

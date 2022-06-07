@@ -13,7 +13,8 @@
     },
     "categories": {
       "auth": {
-        "amplifyawstest43bfb1bd": {}
+        "amplifyawstest43bfb1bd": {},
+        "true": {}
       }
     }
   }
